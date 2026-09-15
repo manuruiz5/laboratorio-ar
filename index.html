@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Búsqueda del Tesoro AR - Edificio Sacré Coeur</title>
+
+  <!-- A-Frame + AR.js (versiones estables fijadas para evitar incompatibilidades) -->
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.js"></script>
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      font-family: 'Segoe UI', Arial, sans-serif;
+    }
+
+    /* ---------- HUD superior: progreso de pistas ---------- */
+    #hud {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 999;
+      padding: 12px 16px;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.75), rgba(0,0,0,0));
+      color: #fff;
+      box-sizing: border-box;
+      pointer-events: none;
+    }
+
+    #hud h1 {
+      margin: 0 0 6px 0;
+      font-size: 16px;
+      letter-spacing: 0.5px;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    }
+
+    #progress-track {
+      display: flex;
+      gap: 8px;
+    }
+
+    .progress-dot {
+      flex: 1;
+      height: 8px;
+      border-radius: 4px;
+      background: rgba(255,255,255,0.25);
+      transition: background 0.4s ease;
+    }
+
+    .progress-dot.found {
+      background: #ffd700;
+      box-shadow: 0 0 8px #ffd700;
+    }
+
+    #progress-label {
+      margin-top: 6px;
+      font-size: 13px;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    }
+
+    /* ---------- Toast de "pista encontrada" ---------- */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      z-index: 999;
+      background: rgba(20, 20, 20, 0.92);
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 14px;
+      max-width: 88vw;
+      text-align: center;
+      border: 1px solid #ffd700;
+      opacity: 0;
+      transition: opacity 0.35s ease, transform 0.35s ease;
+      pointer-events: none;
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ---------- Pantalla final: tesoro encontrado ---------- */
+    #final-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      text-align: center;
+      background: radial-gradient(circle at center, rgba(40,30,0,0.95), rgba(0,0,0,0.97));
+      color: #ffd700;
+      padding: 24px;
+      box-sizing: border-box;
+    }
+
+    #final-overlay.show {
+      display: flex;
+    }
+
+    #final-overlay .emoji {
+      font-size: 64px;
+      margin-bottom: 12px;
+      animation: bounce 1.2s ease-in-out infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-14px); }
+    }
+
+    #final-overlay h2 {
+      margin: 0 0 12px 0;
+      font-size: 26px;
+      text-shadow: 0 0 12px rgba(255,215,0,0.6);
+    }
+
+    #final-overlay p {
+      color: #f5e6c8;
+      max-width: 480px;
+      line-height: 1.5;
+      font-size: 15px;
+    }
+
+    #restart-btn {
+      margin-top: 20px;
+      padding: 10px 22px;
+      border-radius: 24px;
+      border: 2px solid #ffd700;
+      background: transparent;
+      color: #ffd700;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    #restart-btn:active {
+      background: rgba(255,215,0,0.2);
+    }
+
+    /* ---------- Aviso de carga / permiso de cámara ---------- */
+    #loading {
+      position: fixed;
+      inset: 0;
+      z-index: 1001;
+      background: #111;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px;
+      font-size: 15px;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="loading">
+    📷 Activando la cámara...<br>
+    Aceptá el permiso de cámara para comenzar la búsqueda del tesoro.
+  </div>
+
+  <!-- HUD de progreso -->
+  <div id="hud">
+    <h1>🏰 Búsqueda del Tesoro — Edificio Sacré Coeur</h1>
+    <div id="progress-track">
+      <div class="progress-dot" id="dot-1"></div>
+      <div class="progress-dot" id="dot-2"></div>
+      <div class="progress-dot" id="dot-3"></div>
+    </div>
+    <div id="progress-label">0 / 3 pistas encontradas</div>
+  </div>
+
+  <!-- Mensaje corto al encontrar una pista -->
+  <div id="toast"></div>
+
+  <!-- Pantalla final -->
+  <div id="final-overlay">
+    <div class="emoji">🏆</div>
+    <h2>¡TESORO ENCONTRADO!</h2>
+    <p>
+      Reuniste las tres pistas escondidas en el Edificio Sacré Coeur.
+      El viejo relato era cierto: bajo sus techos se escondía un tesoro
+      esperando a quien tuviera la paciencia de buscar en cada rincón.
+      ¡Felicitaciones, aventurero/a!
+    </p>
+    <button id="restart-btn">Volver a jugar</button>
+  </div>
+
+  <!-- ================= ESCENA AR ================= -->
+  <a-scene
+    vr-mode-ui="enabled: false"
+    embedded
+    renderer="logarithmicDepthBuffer: true;"
+    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix;"
+  >
+
+    <a-assets>
+      <a-mixin id="clue-anim" animation="property: rotation; to: 0 360 0; loop: true; dur: 6000; easing: linear"></a-mixin>
+    </a-assets>
+
+    <!-- MARCADOR 1: Hiro -> Pista inicial, presenta el desafío -->
+    <a-marker preset="hiro" id="marker1" emitevents="true">
+      <a-entity position="0 0.5 0">
+        <a-box color="#7b3f00" depth="0.5" height="0.4" width="0.7" position="0 0.2 0" mixin="clue-anim"></a-box>
+        <a-text
+          value="PISTA 1\nEl cofre viejo del\nSacré Coeur guarda\nun secreto..."
+          align="center"
+          color="#FFF7E0"
+          width="2.4"
+          position="0 1 0"
+        ></a-text>
+        <a-text
+          value="Buscá el símbolo del KANJI"
+          align="center"
+          color="#ffd700"
+          width="1.8"
+          position="0 -0.35 0"
+        ></a-text>
+      </a-entity>
+    </a-marker>
+
+    <!-- MARCADOR 2: Kanji -> Segunda pista -->
+    <a-marker preset="kanji" id="marker2" emitevents="true">
+      <a-entity position="0 0.5 0">
+        <a-sphere color="#c0392b" radius="0.3" position="0 0.2 0" mixin="clue-anim"></a-sphere>
+        <a-text
+          value="PISTA 2\nEntre pasillos y\nescaleras, el eco\nguarda un número..."
+          align="center"
+          color="#FFF7E0"
+          width="2.4"
+          position="0 1 0"
+        ></a-text>
+        <a-text
+          value="El tesoro está cada vez más cerca"
+          align="center"
+          color="#ffd700"
+          width="1.8"
+          position="0 -0.35 0"
+        ></a-text>
+      </a-entity>
+    </a-marker>
+
+    <!-- MARCADOR 3: Patrón personalizado -> Pista final / tesoro -->
+    <a-marker type="pattern" url="patterns/custom-marker.patt" id="marker3" emitevents="true">
+      <a-entity position="0 0.5 0">
+        <a-cone color="#ffd700" radius-bottom="0.35" radius-top="0" height="0.5" position="0 0.25 0" mixin="clue-anim"></a-cone>
+        <a-text
+          value="PISTA 3\n¡Encontraste el\nescondite final!"
+          align="center"
+          color="#FFF7E0"
+          width="2.4"
+          position="0 1 0"
+        ></a-text>
+        <a-text
+          value="El tesoro es tuyo..."
+          align="center"
+          color="#ffd700"
+          width="1.8"
+          position="0 -0.35 0"
+        ></a-text>
+      </a-entity>
+    </a-marker>
+
+    <a-entity camera></a-entity>
+  </a-scene>
+
+  <script>
+    // ---------- Estado del juego ----------
+    const STORAGE_KEY = 'sacrecoeur-treasure-progress';
+    const clueMessages = {
+      marker1: '🗝️ Pista 1 encontrada: "El cofre viejo guarda un secreto..."',
+      marker2: '🗺️ Pista 2 encontrada: "Entre pasillos y escaleras..."',
+      marker3: '💰 Pista 3 encontrada: ¡el escondite final!'
+    };
+
+    function loadProgress() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        if (saved && typeof saved === 'object') return saved;
+      } catch (e) { /* ignorar datos corruptos */ }
+      return { marker1: false, marker2: false, marker3: false };
+    }
+
+    function saveProgress(state) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    let found = loadProgress();
+
+    // ---------- Sonidos simples con Web Audio API (sin archivos externos) ----------
+    let audioCtx = null;
+    function getAudioCtx() {
+      if (!audioCtx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AC();
+      }
+      return audioCtx;
+    }
+
+    function beep(frequency, duration, delay = 0, type = 'sine', volume = 0.15) {
+      const ctx = getAudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.value = frequency;
+      gain.gain.value = volume;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      const startTime = ctx.currentTime + delay;
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    }
+
+    function playClueFoundSound() {
+      beep(880, 0.12, 0);
+      beep(1320, 0.15, 0.12);
+    }
+
+    function playTreasureFanfare() {
+      const notes = [523.25, 659.25, 783.99, 1046.5]; // Do-Mi-Sol-Do
+      notes.forEach((freq, i) => beep(freq, 0.25, i * 0.18, 'triangle', 0.18));
+    }
+
+    // ---------- UI ----------
+    const dotEls = {
+      marker1: document.getElementById('dot-1'),
+      marker2: document.getElementById('dot-2'),
+      marker3: document.getElementById('dot-3')
+    };
+    const progressLabel = document.getElementById('progress-label');
+    const toast = document.getElementById('toast');
+    const finalOverlay = document.getElementById('final-overlay');
+
+    let toastTimer = null;
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 3200);
+    }
+
+    function updateHUD() {
+      let count = 0;
+      Object.keys(dotEls).forEach((key) => {
+        if (found[key]) {
+          dotEls[key].classList.add('found');
+          count++;
+        } else {
+          dotEls[key].classList.remove('found');
+        }
+      });
+      progressLabel.textContent = `${count} / 3 pistas encontradas`;
+
+      if (count === 3) {
+        finalOverlay.classList.add('show');
+        playTreasureFanfare();
+      }
+    }
+
+    function handleMarkerFound(markerId) {
+      if (found[markerId]) return; // ya estaba descubierta, no repetir feedback
+      found[markerId] = true;
+      saveProgress(found);
+      showToast(clueMessages[markerId]);
+      playClueFoundSound();
+      updateHUD();
+    }
+
+    // ---------- Listeners de AR.js ----------
+    ['marker1', 'marker2', 'marker3'].forEach((id) => {
+      const el = document.getElementById(id);
+      el.addEventListener('markerFound', () => handleMarkerFound(id));
+      // markerLost no revierte el progreso: una pista ya vista queda encontrada.
+    });
+
+    document.getElementById('restart-btn').addEventListener('click', () => {
+      found = { marker1: false, marker2: false, marker3: false };
+      saveProgress(found);
+      finalOverlay.classList.remove('show');
+      updateHUD();
+    });
+
+    // Ocultar aviso de carga en cuanto la escena esté lista
+    const sceneEl = document.querySelector('a-scene');
+    sceneEl.addEventListener('loaded', () => {
+      document.getElementById('loading').style.display = 'none';
+    });
+
+    updateHUD();
+  </script>
+</body>
+</html>
