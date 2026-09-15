@@ -181,7 +181,7 @@
     <div id="progress-label">0 / 3 pistas encontradas</div>
   </div>
 
-  <!-- Mensaje corto al encontrar una pista -->
+  <!-- Mensaje al encontrar una pista -->
   <div id="toast"></div>
 
   <!-- Pantalla final -->
@@ -190,8 +190,6 @@
     <h2>¡TESORO ENCONTRADO!</h2>
     <p>
       Reuniste las tres pistas escondidas en el Edificio Sacré Coeur.
-      El viejo relato era cierto: bajo sus techos se escondía un tesoro
-      esperando a quien tuviera la paciencia de buscar en cada rincón.
       ¡Felicitaciones, aventurero/a!
     </p>
     <button id="restart-btn">Volver a jugar</button>
@@ -298,7 +296,7 @@
 
     let found = loadProgress();
 
-    // ---------- Sonidos simples con Web Audio API (sin archivos externos) ----------
+    // ---------- Sonidos simples con Web Audio API ----------
     let audioCtx = null;
     function getAudioCtx() {
       if (!audioCtx) {
