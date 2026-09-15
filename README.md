@@ -12,7 +12,7 @@ laboratorio-ar/
 ├── index.html          → toda la lógica del juego (A-Frame + AR.js + JS)
 ├── patterns/
 │   ├── README.md        → instrucciones para generar el 3er marcador
-│   └── custom-marker.patt   → (lo generás vos, ver paso 3 más abajo)
+│   └── custom-marker.patt   
 └── README.md            → este archivo
 ```
 
