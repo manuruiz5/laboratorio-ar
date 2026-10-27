@@ -274,7 +274,7 @@
     vr-mode-ui="enabled: false"
     embedded
     renderer="logarithmicDepthBuffer: true;"
-    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix;"
+    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
   >
 
     <a-assets>
@@ -323,8 +323,8 @@
       </a-entity>
     </a-marker>
 
-    <!-- MARCADOR 3: Patrón personalizado -> Pista final / tesoro -->
-    <a-marker type="pattern" url="patterns/custom-marker.patt" id="marker3" emitevents="true">
+    <!-- MARCADOR 3: Barcode 3x3 número 5 ("la llave") -> Pista final / tesoro -->
+    <a-marker type="barcode" value="5" id="marker3" emitevents="true">
       <a-entity position="0 0.5 0">
         <a-cone color="#ffd700" radius-bottom="0.35" radius-top="0" height="0.5" position="0 0.25 0" mixin="clue-anim"></a-cone>
         <a-text
