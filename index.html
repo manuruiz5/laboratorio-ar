@@ -161,9 +161,83 @@
       font-size: 15px;
       box-sizing: border-box;
     }
+
+    /* ---------- Cartel inicial: cómo jugar ---------- */
+    #intro-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1002;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      text-align: center;
+      background: radial-gradient(circle at center, rgba(40,30,0,0.95), rgba(0,0,0,0.97));
+      color: #ffd700;
+      padding: 24px;
+      box-sizing: border-box;
+    }
+
+    #intro-overlay.hidden {
+      display: none;
+    }
+
+    #intro-overlay h2 {
+      margin: 0 0 12px 0;
+      font-size: 24px;
+      text-shadow: 0 0 12px rgba(255,215,0,0.6);
+    }
+
+    #intro-overlay p {
+      color: #f5e6c8;
+      max-width: 480px;
+      line-height: 1.5;
+      font-size: 15px;
+      margin: 0 0 8px 0;
+    }
+
+    .intro-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 16px;
+    }
+
+    .intro-btn {
+      padding: 10px 22px;
+      border-radius: 24px;
+      border: 2px solid #ffd700;
+      background: transparent;
+      color: #ffd700;
+      font-size: 14px;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .intro-btn.primary {
+      background: #ffd700;
+      color: #1a1400;
+    }
+
+    .intro-btn:active {
+      background: rgba(255,215,0,0.2);
+    }
   </style>
 </head>
 <body>
+
+  <!-- Cartel inicial: cómo jugar -->
+  <div id="intro-overlay">
+    <h2>🗺️ Cómo jugar</h2>
+    <p>Hay un tesoro escondido en el Edificio Sacré Coeur y las pistas aparecen en realidad aumentada.</p>
+    <p>Escaneá los 3 marcadores con la cámara del celular para descubrir cada pista.</p>
+    <p>Abrí los marcadores en otra pantalla (compu o tablet) y apuntales con el celular.</p>
+    <div class="intro-actions">
+      <a class="intro-btn" href="marcadores.html" target="_blank" rel="noopener">Ver los marcadores</a>
+      <button class="intro-btn primary" id="intro-start-btn">Empezar</button>
+    </div>
+  </div>
 
   <div id="loading">
     📷 Activando la cámara...<br>
@@ -387,6 +461,10 @@
       saveProgress(found);
       finalOverlay.classList.remove('show');
       updateHUD();
+    });
+
+    document.getElementById('intro-start-btn').addEventListener('click', () => {
+      document.getElementById('intro-overlay').classList.add('hidden');
     });
 
     // Ocultar aviso de carga en cuanto la escena esté lista

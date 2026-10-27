@@ -10,10 +10,16 @@ El juego está publicado acá:
 
 **https://manuruiz5.github.io/laboratorio-ar/**
 
-Hay que abrirlo desde el celular o computadora (Chrome en Android o Safari en iOS) y aceptar el permiso de cámara. Para jugarlo hacen falta los tres marcadores impresos o mostrados en otra pantalla:
+Hay que abrirlo desde el celular o computadora (Chrome en Android o Safari en iOS) y aceptar el permiso de cámara. Al entrar aparece un cartel de "Cómo jugar" que explica el juego y tiene un botón para ver los marcadores.
 
-- **Marcador 1 (Hiro):** https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/hiro.png
-- **Marcador 2 (Kanji):** https://raw.githubusercontent.com/AR-js-org/AR.js/master/three.js/examples/marker-training/examples/pattern-images/pattern-kanji.png
-- **Marcador 3 (personalizado):** la imagen que está en `patterns/custom-marker.png`
+Los tres marcadores están juntos en una página aparte, `marcadores.html`, pensada para abrirla en otra pantalla (compu o tablet) y escanearlos desde el celular:
+
+**https://manuruiz5.github.io/laboratorio-ar/marcadores.html**
+
+Las imágenes están guardadas en el proyecto, en la carpeta `markers/`, así no dependen de links externos:
+
+- **Marcador 1 (Hiro):** `markers/hiro.png`
+- **Marcador 2 (Kanji):** `markers/kanji.png`
+- **Marcador 3 (la llave, personalizado):** `markers/llave.png` (copia de `patterns/custom-marker.png`)
 
 Un consejo: mejor que estén bien iluminados y no muy chiquitos, porque si están arrugados o con poca luz la cámara tarda en engancharlos. Apuntando el celular a cada uno debería aparecer el objeto 3D con la pista, y al pasar por los tres se desbloquea la pantalla final.
